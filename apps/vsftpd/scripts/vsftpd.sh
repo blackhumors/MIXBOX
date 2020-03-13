@@ -6,12 +6,17 @@ port=21
 FTPUSER=${mbroot}/apps/vsftpd/config/ftpuser.conf
 # binname="${appname} ${appname}-ext"
 userpath=/etc/mixbox/apps/vsftpd/config/vsftpd.users
-[ "$entware" = '1' ] && configpath=/opt/etc/vsftpd/vsftpd.conf || configpath=/etc/vsftpd.conf
+configpath=/etc/vsftpd.conf
+BINPATH=${mbroot}/apps/${appname}/bin/${appname} 
 
+if [ "$entware" = '1' ]; then
+	configpath=/opt/etc/vsftpd/vsftpd.conf
+	BINPATH=/opt/sbin/vsftpd
+fi
 [ ! -d /var/run/vsftpd ] && mkdir -p /var/run/vsftpd
 [ -z "$port" ] && port=21
 [ -z "$anon_root" ] && anon_root=/var/ftp 
-[ ! -f "${configpath}" ] && touch ${configpath}
+
 
 add(){
 	sed -i "/$1/"d /etc/passwd
@@ -74,7 +79,7 @@ set_config() {
 		anon_enable=NO
 	fi
 	
-	mount --bind ${mbroot}/apps/${appname}/config/${appname}.conf ${configpath}
+	cp -rf ${mbroot}/apps/${appname}/config/${appname}.conf ${configpath}
 	echo -e "anonymous_enable=$anon_enable\nanon_root=$anon_root\nlisten_port=${port}" >> ${configpath}
 
 }
@@ -89,20 +94,19 @@ start () {
 	logsh "【$service】" "正在启动${appname}服务... "
 	if [ ! -f ${mbroot}/apps/${appname}/bin/${appname} ]; then
 		bincheck ${binname} 
-    	if [ $? -eq 0 ]; then
-    		logsh "【$service】" "安装程序成功，链接程序到工具箱..."
-    		ln -sf $(which $binname) ${mbroot}/apps/${appname}/bin/${appname} 
-    	else
-    		logsh "【$service】" "程序安装失败！"
-    		end
-    	fi
+  	if [ $? -eq 0 ]; then
+  		logsh "【$service】" "安装程序成功，链接程序到工具箱..."
+  	else
+  		logsh "【$service】" "程序安装失败！"
+  		end
+  	fi
 	fi
 	# init_mount
 	set_config
 	
 	open_port
-    write_firewall_start
-	daemon ${mbroot}/apps/${appname}/bin/${appname} 
+   write_firewall_start
+	daemon $BINPATH
 	if [ $? -ne 0 ]; then
             logsh "【$service】" "启动${appname}服务失败！"
     else
@@ -121,8 +125,9 @@ stop () {
 	do
 		[ ! -z "${line}" ] && del ${line}
 	done
-	rm -rf ${configpath}
 	killall -9 ${appname} &> /dev/null
+	rm -rf ${configpath}
+	
 	
 
 }
@@ -130,8 +135,7 @@ stop () {
 
 status() {
 
-	result=$(pssh | grep ${mbroot}/apps/${appname}/bin/${appname} | grep -v grep | wc -l)
-	if [ "$result" == '0' ]; then
+  if [ -n "$(pidof "${BINPATH}")" ]; then
 		status="未运行|0"
 	else
 		status="运行端口号: ${port}|1"

@@ -9,14 +9,14 @@ wgetsh() {
 	[ ! -d "$wgetfiledir" ] && mkdir -p $wgetfiledir
 	[ ! -d ${mbtmp} ] && mkdir -p ${mbtmp}
 	rm -rf ${mbtmp}/${wgetfilename}
-	if command -v wget-ssl &> /dev/null; then
-		wget-ssl -q --no-check-certificate --tries=1 --timeout=10 -O "${mbtmp}/${wgetfilename}" "$wgeturl"
-		[ $? -eq 0 ] && result="200"
-	else
+	if command -v curl &> /dev/null; then
 		result1=$(curl -skL --connect-timeout 10 -m 20 -w %{http_code} -o "${mbtmp}/${wgetfilename}" "$wgeturl")
+	else
+		wget-ssl -q --no-check-certificate --tries=1 --timeout=10 -O "${mbtmp}/${wgetfilename}" "$wgeturl"
+		[ $? -eq 0 ] && result1="200"
 	fi
 	[ -f "${mbtmp}/${wgetfilename}" ] && result2=$(du -sh "${mbtmp}/${wgetfilename}" 2> /dev/null | awk '{print$1}')
-	if [ "$result" = "200" ] && [ "$result2" != '0' ]; then
+	if [ "$result1" = "200" ] && [ "$result2" != '0' ]; then
 		chmod +x ${mbtmp}/${wgetfilename} > /dev/null 2>&1
 		mv -f ${mbtmp}/${wgetfilename} $wgetfilepath > /dev/null 2>&1
 		return 0
@@ -40,11 +40,7 @@ base_encode() {
 	if [ -z "${1}" ]; then
 		echo -n "" 
 	else
-		if command -v base64-encode &> /dev/null; then
-			echo -n "$*" | base64-encode
-		else
-			echo -n "$*" | baseutil --b64
-		fi
+		echo -n "$*" | base64
 	fi
 }
 
@@ -52,11 +48,7 @@ base_decode() {
 	if [ -z "${1}" ]; then
 		echo -n "" 
 	else
-		if command -v base64-decode &> /dev/null; then
-			echo -n "$*" | base64-decode
-		else
-			echo -n "$*" | baseutil --b64 -d
-		fi
+		echo -n "$*" | base64 -d
 	fi
 }
 
@@ -67,7 +59,7 @@ versioncmp() {
 
 	[ "$1" = "$2" ] && echo -n "0" && return
 
-	if test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" != "$1"; then
+	if test "$(echo "$@" | tr " " "\n" | sort | head -n 1)" != "$1"; then
 		echo -n "-1"
 	else 
 		echo -n "1"

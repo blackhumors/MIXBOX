@@ -1,6 +1,6 @@
 # MIXBOX 
 
-![](https://github.com/monlor/MIXBOX/workflows/Main-CI/badge.svg)
+![](https://github.com/monlor/MIXBOX/workflows/Master-CI/badge.svg)
 
 > MIXBOX是一款全新的，完全基于Shell脚本的工具箱，为在路由器上实现程序的快速配置及运行管理，欢迎大佬们stars、fork及pr.
 
@@ -11,6 +11,10 @@
 ***
 
 ### 更新日志
+
+* 2020-03-06
+	* 更新frps到0.31.2
+	* 修复工具箱下载插件失败的问题
 
 * 2020-03-05-2
 	* 由于cdn缓存不刷新，还是滚回了`coding`源：`https://monlor.coding.net/p/mbfiles/d/mbfiles/git/raw/master`
@@ -135,7 +139,7 @@ mixbox help
 	|    |--- /data/        --- 硬盘目录
 	|--- /extdisks/
 	|    |--- /sd*/         --- 外接盘目录
-	
+
 
 ### 插件列表
 
@@ -190,6 +194,12 @@ mixbox help
 * 执行完插件生成脚本后，插件会生成在apps中，注意名称不能与现有插件重复
 * `gitsync.sh`是打包插件的脚本，-v为更新版本号`可无`，打包的插件生成在appstore下
 	
+
+#### 请喝咖啡
+
+|                             微信                             |                            支付宝                            |
+| :----------------------------------------------------------: | :----------------------------------------------------------: |
+| ![](https://cdn.jsdelivr.net/gh/monlor/file/img/20200312145215.png) | ![](https://cdn.jsdelivr.net/gh/monlor/file/img/20200312145148.png) |
 
 
 
