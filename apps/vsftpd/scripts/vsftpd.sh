@@ -34,6 +34,7 @@ add(){
 	echo -e "$2\n$2" | passwd $1 > /dev/null 2>&1
 
 }
+
 del(){
 	sed -i "/^$1/"d /etc/passwd
 	sed -i "/^$1/"d /etc/shadow
@@ -95,7 +96,7 @@ start () {
 	if [ ! -f ${mbroot}/apps/${appname}/bin/${appname} ]; then
 		bincheck ${binname} 
   	if [ $? -eq 0 ]; then
-  		logsh "【$service】" "安装程序成功，链接程序到工具箱..."
+  		logsh "【$service】" "安装程序成功！"
   	else
   		logsh "【$service】" "程序安装失败！"
   		end
@@ -105,7 +106,7 @@ start () {
 	set_config
 	
 	open_port
-   write_firewall_start
+  write_firewall_start
 	daemon $BINPATH
 	if [ $? -ne 0 ]; then
             logsh "【$service】" "启动${appname}服务失败！"
@@ -127,8 +128,6 @@ stop () {
 	done
 	killall -9 ${appname} &> /dev/null
 	rm -rf ${configpath}
-	
-	
 
 }
 
@@ -136,9 +135,9 @@ stop () {
 status() {
 
   if [ -n "$(pidof "${BINPATH}")" ]; then
-		status="未运行|0"
+  	status="运行端口号: ${port}|1"
 	else
-		status="运行端口号: ${port}|1"
+		status="未运行|0"
 	fi
 	mbdb set $appname.main.status="$status" 
 

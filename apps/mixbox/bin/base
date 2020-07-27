@@ -2,9 +2,10 @@
 #copyright by monlor
 export PATH=$PATH:/etc/mixbox/bin
 
-mburl_coding="https://monlor.coding.net/p/mbfiles/d/mbfiles/git/raw/master"
-mburl_github="https://raw.githubusercontent.com/monlor/MIXBOX/master"
-# mburl_test="https://monlor.coding.net/p/mbfiles/d/mbfiles/git/raw/test"
+mburl_coding="https://monlor.coding.net/p/mbfiles/d/mbfiles/git/lfs/master"
+mburl_github="https://raw.githubusercontent.com/monlor/mbfiles/master"
+mburl_gitee="https://gitee.com/monlor/mbfiles/raw/master"
+mburl_ghcdn="https://cdn.jsdelivr.net/gh/monlor/mbfiles"
 mburl=$(mbdb get mixbox.main.url) || mburl="$mburl_coding"
 mbroot=$(mbdb get mixbox.main.path)
 mbdisk=$(mbdb get mixbox.main.mbdisk)
@@ -194,7 +195,11 @@ remove_firewall_start(){
 
 daemon() {
 	local binname="$(basename "${1}")"
-	nohup $@ &> ${mbroot}/var/log/${binname}.log &
+	if type nohup &>/dev/null; then 
+		nohup $@ &> ${mbroot}/var/log/${binname}.log &
+	else 
+		$@ &> ${mbroot}/var/log/${binname}.log &
+	fi
 	return $?
 }
 

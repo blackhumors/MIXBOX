@@ -13,14 +13,23 @@ eval `mbdb export shadowsocks`
 get_v2ray_bin() {
   result1=$(curl -skL $mburl/appsbin/v2ray-bin/$model/lastest.txt) &> /dev/null
   result2=$(${mbroot}/apps/${appname}/bin/v2ray -version | head -1 | cut -d' ' -f2) &> /dev/null
-  [ -z "$result1" ] && logsh "【$service】" "获取v2ray在线版本失败，请检查网络！" && exit 1
-  logsh "【$service】" "检测v2ray版本，本地版本：$result2，在线版本：$result1"
-  if [ "$result1" != "$result2" ]; then
-    logsh "【$service】" "版本不一致，正在更新..."
-    wgetsh ${mbroot}/apps/${appname}/bin/v2ray $mburl/appsbin/v2ray-bin/$model/v2ray
-    wgetsh ${mbroot}/apps/${appname}/bin/v2ctl $mburl/appsbin/v2ray-bin/$model/v2ctl
-    chmod +x ${mbroot}/apps/${appname}/bin/v2ray
-    chmod +x ${mbroot}/apps/${appname}/bin/v2ctl
+  if [ -z "$result1" ]; then 
+    logsh "【$service】" "获取v2ray在线版本失败，请检查网络！"
+  else
+    logsh "【$service】" "检测v2ray版本，本地版本：$result2，在线版本：$result1"
+    if [ "$result1" != "$result2" ]; then
+      logsh "【$service】" "版本不一致，正在更新..."
+      wgetsh ${mbtmp}/v2ray $mburl/appsbin/v2ray-bin/$model/v2ray
+      wgetsh ${mbtmp}/v2ctl $mburl/appsbin/v2ray-bin/$model/v2ctl
+      chmod +x ${mbtmp}/v2ray
+      chmod +x ${mbtmp}/v2ctl
+      if ${mbtmp}/v2ray -version &> /dev/null; then
+        mv -f ${mbtmp}/v2ray ${mbroot}/apps/${appname}/bin/v2ray
+        mv -f ${mbtmp}/v2ctl ${mbroot}/apps/${appname}/bin/v2ctl
+      else
+        echo "测试v2ray程序失败！跳过更新..."
+      fi
+    fi
   fi
 }
 
@@ -398,6 +407,7 @@ ipset_rules() {
     echo "ipset=/.microsoft.com/customize_white" >> ${mbtmp}/wblist.conf
   fi
   #黑白名单规则
+  test ! -d /tmp/etc/dnsmasq.d && mkdir -p /tmp/etc/dnsmasq.d
   if [ "$ss_mode" = "whitelist" -o "$ssg_mode" = "frgame" -o "$ss_mode" = "homemode" ]; then
     sed -e "s/^/-A nogfwnet &/g" -e "1 i\-N nogfwnet hash:net" ${mbroot}/apps/${appname}/config/chnroute.txt | ipset -R -! 
   elif [ "$ss_mode" = "gfwlist" -o "$ssg_mode" = "cngame" ]; then
@@ -584,7 +594,7 @@ start_main_process() {
     killall -9 v2ray &> /dev/null
     cd ${mbroot}/bin
     result=$(${mbroot}/apps/${appname}/bin/v2ray -test -config="${mbroot}/apps/${appname}/config/v2ray.json" | grep "Configuration OK.")
-    [ -z "$result" ] && logsh "【$service】" "配置文件测试失败！" && exit 1
+    [ -z "$result" ] && logsh "【$service】" "配置文件测试失败！" 
     logsh "【$service】" "启动v2ray主进程($id)..."
     [ -z "$ss_mode" ] && logsh "【$service】" "未配置${appname}运行模式！" && exit 1
     daemon ${mbroot}/apps/${appname}/bin/v2ray -config="${mbroot}/apps/${appname}/config/v2ray.json"

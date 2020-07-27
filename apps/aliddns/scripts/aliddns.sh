@@ -6,7 +6,6 @@ start() {
 
     # [ -n "$(pidof ${appname})" ] && logsh "【$service】" "${appname}已经在运行！" && exit 1
     logsh "【$service】" "正在启动${appname}服务... "
-    
     # Scripts Here
     # open_port
     # write_firewall_start
@@ -14,7 +13,12 @@ start() {
     [ -z "$time" ] && time=10
     
     cru a "${appname}" "*/$time * * * * ${mbroot}/apps/${appname}/scripts/${appname}.sh restart"
-    daemon ${mbroot}/apps/${appname}/bin/${appname} --id "$app_key" --secret "$app_secret" auto-update --domain "$domain"
+    if [ "${type}" = '1' -o "${type}" = '2' ]; then
+        daemon ${mbroot}/apps/${appname}/bin/${appname} --id "$app_key" --secret "$app_secret" auto-update -6 --domain "$domain"
+    fi
+    if [ "${type}" = '0' -o "${type}" = '2' ]; then
+        daemon ${mbroot}/apps/${appname}/bin/${appname} --id "$app_key" --secret "$app_secret" auto-update --domain "$domain" 
+    fi
     if [ $? -ne 0 ]; then
             logsh "【$service】" "启动${appname}服务失败！"
     else

@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash 
 path=./
 cd $path
 [ $? -ne 0 ] && echo "Change directory failed!" && exit
@@ -64,25 +64,30 @@ pack() {
 	rm -rf appstore/
 
 	echo "开始打包插件..."
- 	mkdir appstore
+ 	mkdir -p appstore
 	ls apps/ | while read line; do
 		# 取用缓存数据
-		if [ -f ${pack_dir}/applist.txt ]; then
-			version_old=`cat ${pack_dir}/applist.txt | grep "$line|" | cut -d'|' -f4`
-			version_new=`cat apps/$line/config/$line.uci | grep "version=" | cut -d'=' -f2 | sed -e 's/"//g'`
-			[ "$version_new" = "$version_old" ] && echo "$line未更新，跳过打包..." && continue
-		fi
-		pack_app $line
+		# if [ -f ${pack_dir}/applist.txt ]; then
+		# 	version_old=`cat ${pack_dir}/applist.txt | grep "$line|" | cut -d'|' -f4`
+		# 	version_new=`cat apps/$line/config/$line.uci | grep "version=" | cut -d'=' -f2 | sed -e 's/"//g'`
+		# 	if [ "$version_new" != "$version_old" ] || [ -z "$(ls ${pack_dir}/appstore/${line}*)" ]; then
+		# 		echo "打包$line..." 
+		# 	else
+		# 		continue
+		# 	fi
+		# fi
+		echo "开始打包$line..." 
+		pack_app $line 
 	done
 	gerneral_applist
 
 	test ! -d ${pack_dir}/appstore && mkdir -p ${pack_dir}/appstore
 	test ! -d ${pack_dir}/temp && mkdir -p ${pack_dir}/temp
 	test ! -d ${pack_dir}/appsbin && mkdir -p ${pack_dir}/appsbin
-	
+
 	cp -rf appsbin/* ${pack_dir}/appsbin/
   cp -rf temp/* ${pack_dir}/temp/
-  cp -rf install.sh ${pack_dir}/
+  cp -rf *.sh ${pack_dir}/
   mv -f appstore/* ${pack_dir}/appstore/
   mv -f applist.txt ${pack_dir}/
 
@@ -114,7 +119,7 @@ reset() {
 # $1: path to push
 # $2: remote branch name
 # $3: remote url with token
-deploy() {
+deploy_lfs() {
 
 	sed -Ei "s#mbfiles/git/raw/[a-z]+#mbfiles/git/raw/$2#" $1/install.sh
 
@@ -138,6 +143,24 @@ deploy() {
   git push "$3"
 }
 
+deploy() {
+
+	sed -Ei "s#mbfiles/git/raw/[a-z]+#mbfiles/git/raw/$2#" $1/install.sh
+
+	cd $1
+	if [ ! -d ".git" ]; then
+	  git init
+	fi
+	git config --local user.email "monlor@qq.com"
+	git config --local user.name "monlor"
+
+	if git status &> /dev/null; then
+	  git add .
+	  git commit -m "$(TZ='Asia/Shanghai' date "+%Y-%m-%d %H:%M:%S")" -a
+	fi
+  git push "$3"
+}
+
 case $1 in 
 	github)
 		github master	
@@ -156,7 +179,12 @@ case $1 in
 	reset)
 		reset master
 		;;
+	deploy_lfs)
+		shift 1
+		deploy_lfs $@
+		;;
 	deploy)
 		shift 1
 		deploy $@
+		;;
 esac
